@@ -3,6 +3,8 @@ import sqlite3
 import pandas as pd
 import altair as alt
 
+#comment
+
 # --- Settings ---
 DB_PATH = r"C:\Coding Project\allshooters.db"
 
