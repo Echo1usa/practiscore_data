@@ -6,7 +6,7 @@ import altair as alt
 #comment
 
 # --- Settings ---
-DB_PATH = r"C:\Coding Project\allshooters.db"
+DB_PATH = "allshooters.db"
 
 st.set_page_config(page_title="All Shooters Dashboard", layout="centered")
 st.title("🎯 All Shooters Match History Dashboard")
