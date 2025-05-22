@@ -2,14 +2,15 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 
-# --- Connect to DB ---
-db_path = "allshooters.db"
-conn = sqlite3.connect(db_path)
-
+# --- Page config ---
 st.set_page_config(page_title="2025 Season Scores", layout="centered")
 st.title("2025 Season Scores")
 
-# --- Load aggregated shooter data ---
+# --- Connect to the database ---
+db_path = "allshooters.db"
+conn = sqlite3.connect(db_path)
+
+# --- Query aggregated shooter data ---
 query = """
 SELECT
     s.name AS shooter_name,
@@ -29,15 +30,36 @@ ORDER BY
 
 df = pd.read_sql_query(query, conn)
 
-# --- Add Rank Column ---
+# --- Add Rank column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
 
-# --- Remove unwanted column ---
-df = df.drop(columns=['matches_shot'])
+# --- Optional: Filter by classification ---
+class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B", "C", "Unclassified"])
+if class_filter != "All":
+    df = df[df["classification"] == class_filter]
 
-# --- Display Leaderboard ---
-st.dataframe(df.reset_index(drop=True), use_container_width=True)
+# --- Remove matches_shot if not needed ---
+df = df.drop(columns=["matches_shot"])
 
-# --- Optional Highlighting ---
-st.markdown
+# --- Highlight rows by classification ---
+def highlight_class(row):
+    color = {
+        "A": "#d4f4dd",        # light green
+        "B": "#fff6b3",        # light yellow
+        "C": "#ffe5e5",        # light red
+        "Unclassified": "#e0e0e0"  # light gray
+    }.get(row["classification"], "#ffffff")
+    return ['background-color: {}'.format(color)] * len(row)
 
+# --- Display leaderboard ---
+st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
+
+# --- Footer / Info ---
+st.markdown("""
+- 🥇 Shooters ranked by **average match %**
+- 🧮 Classification calculated from **first 3 matches**
+- 📊 Filter above to compare within a class
+""")
+
+# --- Cleanup ---
+conn.close()
