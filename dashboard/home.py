@@ -57,7 +57,7 @@ def highlight_class(row):
     style = {
         "A": {"bg": "#1f7a1f", "fg": "white"},         # dark green
         "B": {"bg": "#997a00", "fg": "white"},         # dark yellow
-        "C": {"bg": "#802626", "fg": "white"},         # dark red
+        "C": {"bg": "#42bff5", "fg": "white"},         # dark red
         "Unclassified": {"bg": "#4d4d4d", "fg": "white"}  # dark gray
     }.get(row["Class"], {"bg": "#000000", "fg": "white"})
 
