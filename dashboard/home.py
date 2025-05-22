@@ -30,7 +30,7 @@ ORDER BY
 """
 
 df = pd.read_sql_query(query, conn)
-df = df.reset_index(drop=True)
+
 
 # --- Add Rank column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
@@ -65,6 +65,8 @@ def highlight_class(row):
     return [f'background-color: {style["bg"]}; color: {style["fg"]}'] * len(row)
 
 # --- Display leaderboard ---
+df = df.reset_index(drop=True)
+
 if df.empty:
     st.warning("No shooters found for the selected classification.")
 else:
