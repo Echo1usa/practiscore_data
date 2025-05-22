@@ -42,14 +42,17 @@ if class_filter != "All":
 df = df.drop(columns=["matches_shot"])
 
 # --- Highlight rows by classification ---
+
 def highlight_class(row):
-    color = {
-        "A": "#d4f4dd",        # light green
-        "B": "#fff6b3",        # light yellow
-        "C": "#ffe5e5",        # light red
-        "Unclassified": "#e0e0e0"  # light gray
-    }.get(row["classification"], "#ffffff")
-    return ['background-color: {}'.format(color)] * len(row)
+    style = {
+        "A": {"bg": "#1f7a1f", "fg": "white"},         # dark green
+        "B": {"bg": "#997a00", "fg": "white"},         # dark yellow
+        "C": {"bg": "#802626", "fg": "white"},         # dark red
+        "Unclassified": {"bg": "#4d4d4d", "fg": "white"}  # dark gray
+    }.get(row["classification"], {"bg": "#000000", "fg": "white"})
+
+    return [f'background-color: {style["bg"]}; color: {style["fg"]}'] * len(row)
+
 
 # --- Display leaderboard ---
 st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
