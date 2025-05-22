@@ -7,7 +7,7 @@ st.set_page_config(page_title="2025 Season Scores", layout="centered")
 st.title("2025 Season Scores")
 
 # --- Connect to the database ---
-db_path = "allshooters.db"
+db_path = "allshooters_dev.db"
 conn = sqlite3.connect(db_path)
 
 # --- Query aggregated shooter data ---
