@@ -30,6 +30,7 @@ ORDER BY
 """
 
 df = pd.read_sql_query(query, conn)
+df = df.reset_index(drop=True)
 
 # --- Add Rank column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
