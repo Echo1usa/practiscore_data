@@ -31,7 +31,6 @@ ORDER BY
 
 df = pd.read_sql_query(query, conn)
 
-
 # --- Add Rank column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
 
@@ -60,13 +59,14 @@ def highlight_class(row):
         "B": {"bg": "#997a00", "fg": "white"},         # dark yellow
         "C": {"bg": "#802626", "fg": "white"},         # dark red
         "Unclassified": {"bg": "#4d4d4d", "fg": "white"}  # dark gray
-    }.get(row["Class"], {"bg": "#000000", "fg": "white"})  # changed to "Class" to match renamed column
+    }.get(row["Class"], {"bg": "#000000", "fg": "white"})
 
     return [f'background-color: {style["bg"]}; color: {style["fg"]}'] * len(row)
 
-# --- Display leaderboard ---
-df = df.reset_index(drop=True)
+# --- Set 🏅 Rank as the index to hide the default index ---
+df = df.set_index("🏅 Rank")
 
+# --- Display leaderboard ---
 if df.empty:
     st.warning("No shooters found for the selected classification.")
 else:
