@@ -141,5 +141,39 @@ with sync_playwright() as p:
 
         browser.close()
 
+def classify_shooters():
+    shooter_ids = cursor.execute("SELECT id FROM shooters").fetchall()
+
+    for (shooter_id,) in shooter_ids:
+        # Remove the skip to always re-classify (optional)
+        # existing = cursor.execute("SELECT classification FROM shooters WHERE id = ?", (shooter_id,)).fetchone()[0]
+        # if existing:
+        #     continue
+
+        percentages = cursor.execute("""
+            SELECT percentage FROM results
+            WHERE shooter_id = ?
+            ORDER BY match_id ASC
+            LIMIT 3
+        """, (shooter_id,)).fetchall()
+
+        if len(percentages) < 3:
+            classification = 'Unclassified'
+        else:
+            avg = sum(p[0] for p in percentages) / 3
+            if avg > 87:
+                classification = 'A'
+            elif avg > 67:
+                classification = 'B'
+            else:
+                classification = 'C'
+
+        cursor.execute(
+            "UPDATE shooters SET classification = ? WHERE id = ?",
+            (classification, shooter_id)
+        )
+
+    conn.commit()
+
 conn.close()
 print("\n✅ All matches processed.")
