@@ -10,14 +10,15 @@ st.title("2025 Season Scores")
 db_path = "allshooters_dev.db"
 conn = sqlite3.connect(db_path)
 
-# --- Query aggregated shooter data ---
+# --- Query: Get shooter stats including total points ---
 query = """
 SELECT
     s.name AS shooter_name,
     s.classification,
     COUNT(r.id) AS matches_shot,
     ROUND(AVG(r.percentage), 2) AS avg_percentage,
-    ROUND(MAX(r.percentage), 2) AS best_percentage
+    ROUND(MAX(r.percentage), 2) AS best_percentage,
+    ROUND(SUM(r.percentage), 2) AS total_points
 FROM
     shooters s
 JOIN 
@@ -41,21 +42,32 @@ if class_filter != "All":
 # --- Remove matches_shot if not needed ---
 df = df.drop(columns=["matches_shot"])
 
-# --- Highlight rows by classification ---
+# --- Rename columns for display ---
+df = df.rename(columns={
+    "Rank": "🏅 Rank",
+    "shooter_name": "Shooter Name",
+    "classification": "Class",
+    "avg_percentage": "Average %",
+    "best_percentage": "Best %",
+    "total_points": "Total Points"
+})
 
+# --- Highlight rows by classification ---
 def highlight_class(row):
     style = {
         "A": {"bg": "#1f7a1f", "fg": "white"},         # dark green
         "B": {"bg": "#997a00", "fg": "white"},         # dark yellow
         "C": {"bg": "#802626", "fg": "white"},         # dark red
         "Unclassified": {"bg": "#4d4d4d", "fg": "white"}  # dark gray
-    }.get(row["classification"], {"bg": "#000000", "fg": "white"})
+    }.get(row["Class"], {"bg": "#000000", "fg": "white"})  # changed to "Class" to match renamed column
 
     return [f'background-color: {style["bg"]}; color: {style["fg"]}'] * len(row)
 
-
 # --- Display leaderboard ---
-st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
+if df.empty:
+    st.warning("No shooters found for the selected classification.")
+else:
+    st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
 
 # --- Footer / Info ---
 st.markdown("""
