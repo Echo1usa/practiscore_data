@@ -1,0 +1,7 @@
+[[pages]]
+path = "home.py"
+name = "2025 Season Scores"
+
+[[pages]]
+path = "pages/allshooters_dashboard.py"
+name = "Individual Results"
