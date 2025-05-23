@@ -25,11 +25,21 @@ JOIN
     results r ON s.id = r.shooter_id
 GROUP BY 
     s.id
-ORDER BY 
-    avg_percentage DESC
 """
 
 df = pd.read_sql_query(query, conn)
+
+# --- Assign custom classification order ---
+class_order = {
+    "A": 1,
+    "B": 2,
+    "C": 3,
+    "Unclassified": 4
+}
+df["class_rank"] = df["classification"].map(class_order).fillna(5)
+
+# --- Sort by classification rank, then avg_percentage descending ---
+df = df.sort_values(by=["class_rank", "avg_percentage"], ascending=[True, False])
 
 # --- Add Rank column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
@@ -39,8 +49,8 @@ class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B
 if class_filter != "All":
     df = df[df["classification"] == class_filter]
 
-# --- Remove matches_shot if not needed ---
-df = df.drop(columns=["matches_shot"])
+# --- Remove unused columns for display ---
+df = df.drop(columns=["matches_shot", "class_rank"])
 
 # --- Rename columns for display ---
 df = df.rename(columns={
@@ -55,15 +65,15 @@ df = df.rename(columns={
 # --- Highlight rows by classification ---
 def highlight_class(row):
     style = {
-        "A": {"bg": "#1f7a1f", "fg": "white"},         # dark green
-        "B": {"bg": "#997a00", "fg": "white"},         # dark yellow
-        "C": {"bg": "#42bff5", "fg": "white"},         # dark red
-        "Unclassified": {"bg": "#4d4d4d", "fg": "white"}  # dark gray
+        "A": {"bg": "#1f7a1f", "fg": "white"},
+        "B": {"bg": "#997a00", "fg": "white"},
+        "C": {"bg": "#802626", "fg": "white"},
+        "Unclassified": {"bg": "#4d4d4d", "fg": "white"}
     }.get(row["Class"], {"bg": "#000000", "fg": "white"})
 
     return [f'background-color: {style["bg"]}; color: {style["fg"]}'] * len(row)
 
-# --- Set 🏅 Rank as the index to hide the default index ---
+# --- Set 🏅 Rank as index to remove extra column ---
 df = df.set_index("🏅 Rank")
 
 # --- Display leaderboard ---
@@ -74,9 +84,9 @@ else:
 
 # --- Footer / Info ---
 st.markdown("""
-- 🥇 Shooters ranked by **average match %**
+- 🥇 Shooters ranked by **classification**, then **average match %**
 - 🧮 Classification calculated from **first 3 matches**
-- 📊 Filter above to compare within a class
+- 📊 Use filter above to compare within a class
 """)
 
 # --- Cleanup ---
