@@ -22,7 +22,7 @@ for match_id, name, match_date in old_matches:
     cursor.execute("DELETE FROM results WHERE match_id = ?", (match_id,))
     
     # Optional: Also delete from stage_results if used
-    cursor.execute("DELETE FROM stage_results WHERE match_id = ?", (match_id,))
+    #cursor.execute("DELETE FROM stage_results WHERE match_id = ?", (match_id,))
 
     # Delete match entry
     cursor.execute("DELETE FROM matches WHERE id = ?", (match_id,))
