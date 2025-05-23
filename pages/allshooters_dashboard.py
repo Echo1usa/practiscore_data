@@ -8,8 +8,8 @@ import altair as alt
 # --- Settings ---
 DB_PATH = "allshooters_dev.db"
 
-st.set_page_config(page_title="All Shooters Dashboard", layout="centered")
-st.title("🎯 All Shooters Match History Dashboard")
+st.set_page_config(page_title="Individual Shooter Data", layout="centered")
+st.title("Individual Shooter Data")
 
 # Connect to the database
 conn = sqlite3.connect(DB_PATH)
