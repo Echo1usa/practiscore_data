@@ -66,7 +66,7 @@ df = df.rename(columns={
 def highlight_class(row):
     style = {
         "A": {"bg": "#1f7a1f", "fg": "white"},
-        "B": {"bg": "#997a00", "fg": "white"},
+        "B": {"bg": "#eb6434", "fg": "white"},
         "C": {"bg": "#3483eb", "fg": "white"},
         "Unclassified": {"bg": "#4d4d4d", "fg": "white"}
     }.get(row["Class"], {"bg": "#000000", "fg": "white"})
