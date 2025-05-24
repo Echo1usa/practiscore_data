@@ -43,7 +43,6 @@ def highlight_class(row):
     return ['background-color: {}'.format(color)] * len(row)
 
 # --- Display leaderboard ---
-st.dataframe(df.style.apply(highlight_gray, axis=1), use_container_width=True)
 
 # --- Footer / Info ---
 st.markdown("""
