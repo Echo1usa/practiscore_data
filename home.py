@@ -7,7 +7,7 @@ st.set_page_config(page_title="2025 WYCO Points Leaderboard", layout="centered")
 st.title("2025 WYCO Points Leaderboard")
 
 # --- Connect to the database ---
-db_path = "allshooters_dev.db"
+db_path = "allshooters.db"
 conn = sqlite3.connect(db_path)
 
 # --- Query shooter WYCO data ---
@@ -31,18 +31,12 @@ class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B
 if class_filter != "All":
     df = df[df["classification"] == class_filter]
 
-# --- Highlight rows by classification ---
-def highlight_class(row):
-    color = {
-        "A": "#d4f4dd",        # light green
-        "B": "#fff6b3",        # light yellow
-        "C": "#ffe5e5",        # light red
-        "Unclassified": "#e0e0e0"  # light gray
-    }.get(row["classification"], "#ffffff")
-    return ['background-color: {}'.format(color)] * len(row)
+# --- Highlight all rows with light gray background ---
+def highlight_gray(row):
+    return ['background-color: #f2f2f2'] * len(row)
 
 # --- Display leaderboard ---
-st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
+st.dataframe(df.style.apply(highlight_gray, axis=1), use_container_width=True)
 
 # --- Footer / Info ---
 st.markdown("""
