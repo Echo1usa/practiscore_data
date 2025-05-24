@@ -31,8 +31,7 @@ class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B
 if class_filter != "All":
     df = df[df["classification"] == class_filter]
 
-# --- Highlight all rows with light gray background ---
-
+# --- Highlight rows by classification ---
 def highlight_class(row):
     color = {
         "A": "#d4f4dd",        # light green
@@ -43,6 +42,7 @@ def highlight_class(row):
     return ['background-color: {}'.format(color)] * len(row)
 
 # --- Display leaderboard ---
+st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
 
 # --- Footer / Info ---
 st.markdown("""
