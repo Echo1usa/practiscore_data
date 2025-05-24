@@ -22,17 +22,14 @@ WHERE s.wyco_points IS NOT NULL
 
 df = pd.read_sql_query(query, conn)
 
-# --- Fix missing classifications ---
-df["classification"] = df["classification"].fillna("Unclassified")
-
 # --- Define custom class sorting ---
 class_order = {"A": 0, "B": 1, "C": 2, "Unclassified": 3}
 df["class_order"] = df["classification"].map(class_order)
 
-# --- Sort by classification then WYCO points ---
+# --- Sort by classification first, then WYCO points ---
 df = df.sort_values(by=["class_order", "wyco_points"], ascending=[True, False]).reset_index(drop=True)
 
-# --- Add Rank column ---
+# --- Add Rank column after sorting ---
 df.insert(0, "Rank", range(1, len(df) + 1))
 
 # --- Filter by classification ---
@@ -40,7 +37,7 @@ class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B
 if class_filter != "All":
     df = df[df["classification"] == class_filter]
 
-# --- Highlight rows by classification ---
+# --- Highlight rows by classification with vivid and dark-mode-friendly colors ---
 def highlight_class(row):
     color = {
         "A": "#2ecc71",        # green
