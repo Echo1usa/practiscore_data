@@ -89,18 +89,21 @@ with sync_playwright() as p:
             match_date = match_date.group(1) if match_date else None
             print(f"📅 Date: {match_date}")
 
-            # Insert or update match
-            cursor.execute("SELECT id FROM matches WHERE url = ?", (match_url,))
-            row = cursor.fetchone()
-            if row:
-                match_id = row[0]
-                cursor.execute("UPDATE matches SET name=?, date_added=?, match_date=? WHERE id=?",
-                               (match_name, datetime.now().isoformat(), match_date, match_id))
-            else:
-                cursor.execute("INSERT INTO matches (name, url, date_added, match_date) VALUES (?, ?, ?, ?)",
-                               (match_name, match_url, datetime.now().isoformat(), match_date))
-                match_id = cursor.lastrowid
-            conn.commit()
+          cursor.execute("SELECT id FROM matches WHERE url = ?", (match_url,))
+          existing = cursor.fetchone()
+          if existing:
+            print(f"⏩ Skipping already-imported match: {match_name}")
+            browser.close()
+            continue  # skip to next match
+
+# Otherwise insert and proceed
+        cursor.execute("""
+        INSERT INTO matches (name, url, date_added, match_date)
+        VALUES (?, ?, ?, ?)
+    """, (match_name, match_url, datetime.now().isoformat(), match_date))
+    match_id = cursor.lastrowid
+    conn.commit()
+
 
             # --- Parse results table ---
             rows = page.query_selector_all("table tr")
