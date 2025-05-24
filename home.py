@@ -25,13 +25,31 @@ df = pd.read_sql_query(query, conn)
 # --- Add Rank Column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
 
+# --- Filter by Classification ---
+class_filter = st.selectbox(
+    "Filter by classification:", 
+    options=["All"] + sorted(df["classification"].dropna().unique())
+)
+if class_filter != "All":
+    df = df[df["classification"] == class_filter]
+
+# --- Highlight Rows by Classification ---
+def highlight_class(row):
+    color = {
+        "A": "#d4f4dd",        # light green
+        "B": "#fff6b3",        # light yellow
+        "C": "#ffe5e5",        # light red
+        "Unclassified": "#e0e0e0"  # light gray
+    }.get(row["classification"], "#ffffff")
+    return ['background-color: {}'.format(color)] * len(row)
+
 # --- Display Leaderboard ---
-st.dataframe(df.reset_index(drop=True), use_container_width=True)
+st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
 
 # --- Footer Info ---
 st.markdown("""
-- 🥇 Rankings are based on the sum of a shooter's top 3 venue scores
-- ✨ Finale score will be added at the end of the season
+- 🥇 Rankings are based on the sum of a shooter's top 3 venue scores  
+- ✨ Finale score will be added at the end of the season  
 - 📊 Use classification to track development tiers
 """)
 
