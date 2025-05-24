@@ -32,8 +32,15 @@ if class_filter != "All":
     df = df[df["classification"] == class_filter]
 
 # --- Highlight all rows with light gray background ---
-def highlight_gray(row):
-    return ['background-color: #f2f2f2'] * len(row)
+
+def highlight_class(row):
+    color = {
+        "A": "#d4f4dd",        # light green
+        "B": "#fff6b3",        # light yellow
+        "C": "#ffe5e5",        # light red
+        "Unclassified": "#e0e0e0"  # light gray
+    }.get(row["classification"], "#ffffff")
+    return ['background-color: {}'.format(color)] * len(row)
 
 # --- Display leaderboard ---
 st.dataframe(df.style.apply(highlight_gray, axis=1), use_container_width=True)
