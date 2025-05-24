@@ -7,7 +7,7 @@ st.set_page_config(page_title="2025 WYCO Points Leaderboard", layout="centered")
 st.title("2025 WYCO Points Leaderboard")
 
 # --- Connect to the database ---
-db_path = "allshooters_dev.db"
+db_path = "allshooters.db"
 conn = sqlite3.connect(db_path)
 
 # --- Query shooter WYCO data ---
@@ -22,14 +22,17 @@ WHERE s.wyco_points IS NOT NULL
 
 df = pd.read_sql_query(query, conn)
 
+# --- Fix missing classifications ---
+df["classification"] = df["classification"].fillna("Unclassified")
+
 # --- Define custom class sorting ---
 class_order = {"A": 0, "B": 1, "C": 2, "Unclassified": 3}
 df["class_order"] = df["classification"].map(class_order)
 
-# --- Sort by classification first, then WYCO points ---
+# --- Sort by classification then WYCO points ---
 df = df.sort_values(by=["class_order", "wyco_points"], ascending=[True, False]).reset_index(drop=True)
 
-# --- Add Rank column after sorting ---
+# --- Add Rank column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
 
 # --- Filter by classification ---
@@ -37,7 +40,7 @@ class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B
 if class_filter != "All":
     df = df[df["classification"] == class_filter]
 
-# --- Highlight rows by classification with vivid and dark-mode-friendly colors ---
+# --- Highlight rows by classification ---
 def highlight_class(row):
     color = {
         "A": "#2ecc71",        # green
