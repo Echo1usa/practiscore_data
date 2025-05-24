@@ -2,14 +2,15 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 
-# --- Connect to DB ---
-db_path = "allshooters_dev.db"
-conn = sqlite3.connect(db_path)
-
-st.set_page_config(page_title="2025 Season Scores", layout="centered")
+# --- Page config ---
+st.set_page_config(page_title="2025 WYCO Points Leaderboard", layout="centered")
 st.title("2025 WYCO Points Leaderboard")
 
-# --- Load shooter WYCO scores ---
+# --- Connect to the database ---
+db_path = "allshooters.db"
+conn = sqlite3.connect(db_path)
+
+# --- Query shooter WYCO data ---
 query = """
 SELECT
     s.name AS shooter_name,
@@ -22,18 +23,15 @@ ORDER BY s.wyco_points DESC
 
 df = pd.read_sql_query(query, conn)
 
-# --- Add Rank Column ---
+# --- Add Rank column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
 
-# --- Filter by Classification ---
-class_filter = st.selectbox(
-    "Filter by classification:", 
-    options=["All"] + sorted(df["classification"].dropna().unique())
-)
+# --- Optional: Filter by classification ---
+class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B", "C", "Unclassified"])
 if class_filter != "All":
     df = df[df["classification"] == class_filter]
 
-# --- Highlight Rows by Classification ---
+# --- Highlight rows by classification ---
 def highlight_class(row):
     color = {
         "A": "#d4f4dd",        # light green
@@ -43,14 +41,15 @@ def highlight_class(row):
     }.get(row["classification"], "#ffffff")
     return ['background-color: {}'.format(color)] * len(row)
 
-# --- Display Leaderboard ---
+# --- Display leaderboard ---
 st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
 
-# --- Footer Info ---
+# --- Footer / Info ---
 st.markdown("""
 - 🥇 Rankings are based on the sum of a shooter's top 3 venue scores  
 - ✨ Finale score will be added at the end of the season  
-- 📊 Use classification to track development tiers
+- 📊 Filter above to compare within a class
 """)
 
+# --- Cleanup ---
 conn.close()
