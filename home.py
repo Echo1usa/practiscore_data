@@ -26,24 +26,23 @@ df = pd.read_sql_query(query, conn)
 # --- Add Rank column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
 
-# --- Optional: Filter by classification ---
+# --- Filter by classification ---
 class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B", "C", "Unclassified"])
 if class_filter != "All":
     df = df[df["classification"] == class_filter]
 
-# --- Highlight rows by classification ---
+# --- Highlight rows by classification with vivid dark-mode-friendly colors ---
 def highlight_class(row):
     color = {
-        "A": "#d4f4dd",        # light green
-        "B": "#fff6b3",        # light yellow
-        "C": "#ffe5e5",        # light red
-        "Unclassified": "#e0e0e0"  # light gray
-    }.get(row["classification"], "#ffffff")
-    return ['background-color: {}'.format(color)] * len(row)
+        "A": "#2ecc71",        # green
+        "B": "#e67e22",        # orange
+        "C": "#3498db",        # blue
+        "Unclassified": "#7f8c8d"  # gray
+    }.get(row["classification"], "#2c3e50")  # fallback
+    return [f'background-color: {color}; color: white'] * len(row)
 
 # --- Display leaderboard ---
-st.table(df.style.apply(highlight_class, axis=1))
-
+st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
 
 # --- Footer / Info ---
 st.markdown("""
