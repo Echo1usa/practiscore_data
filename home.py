@@ -18,12 +18,18 @@ SELECT
     s.wyco_points
 FROM shooters s
 WHERE s.wyco_points IS NOT NULL
-ORDER BY s.wyco_points DESC
 """
 
 df = pd.read_sql_query(query, conn)
 
-# --- Add Rank column ---
+# --- Define custom class sorting ---
+class_order = {"A": 0, "B": 1, "C": 2, "Unclassified": 3}
+df["class_order"] = df["classification"].map(class_order)
+
+# --- Sort by classification first, then WYCO points ---
+df = df.sort_values(by=["class_order", "wyco_points"], ascending=[True, False]).reset_index(drop=True)
+
+# --- Add Rank column after sorting ---
 df.insert(0, "Rank", range(1, len(df) + 1))
 
 # --- Filter by classification ---
@@ -31,22 +37,22 @@ class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B
 if class_filter != "All":
     df = df[df["classification"] == class_filter]
 
-# --- Highlight rows by classification with vivid dark-mode-friendly colors ---
+# --- Highlight rows by classification with vivid and dark-mode-friendly colors ---
 def highlight_class(row):
     color = {
         "A": "#2ecc71",        # green
         "B": "#e67e22",        # orange
         "C": "#3498db",        # blue
-        "Unclassified": "#7f8c8d"  # gray
-    }.get(row["classification"], "#2c3e50")  # fallback
-    return [f'background-color: {color}; color: black'] * len(row)
+        "Unclassified": "#000000"  # black
+    }.get(row["classification"], "#2c3e50")
+    return [f'background-color: {color}; color: white'] * len(row)
 
 # --- Display leaderboard ---
-st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
+st.dataframe(df.drop(columns=["class_order"]).style.apply(highlight_class, axis=1), use_container_width=True)
 
 # --- Footer / Info ---
 st.markdown("""
-- 🥇 Rankings are based on the sum of a shooter's top 3 venue scores  
+- 🥇 Shooters are grouped by classification, then sorted by WYCO points  
 - ✨ Finale score will be added at the end of the season  
 - 📊 Filter above to compare within a class
 """)
