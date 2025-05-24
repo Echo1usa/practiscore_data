@@ -33,13 +33,17 @@ if class_filter != "All":
 
 # --- Highlight rows by classification with vivid dark-mode-friendly colors ---
 def highlight_class(row):
-    color = {
-        "A": "#2ecc71",        # green
-        "B": "#e67e22",        # orange
-        "C": "#3498db",        # blue
-        "Unclassified": "#7f8c8d"  # gray
-    }.get(row["classification"], "#2c3e50")  # fallback
-    return [f'background-color: {color}; color: white'] * len(row)
+    style = {
+        "A": {"bg": "#1f7a1f", "fg": "white"},
+        "B": {"bg": "#eb6434", "fg": "white"},
+        "C": {"bg": "#3483eb", "fg": "white"},
+        "Unclassified": {"bg": "#4d4d4d", "fg": "white"}
+    }.get(row["Class"], {"bg": "#000000", "fg": "white"})
+
+    return [f'background-color: {style["bg"]}; color: {style["fg"]}'] * len(row)
+
+# --- Set 🏅 Rank as index to remove extra column ---
+df = df.set_index("🏅 Rank")
 
 # --- Display leaderboard ---
 st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
