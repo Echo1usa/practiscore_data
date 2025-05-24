@@ -3,7 +3,7 @@ import sqlite3
 import pandas as pd
 
 # --- Connect to DB ---
-db_path = "allshooters.db"
+db_path = "allshooters_dev.db"
 conn = sqlite3.connect(db_path)
 
 st.set_page_config(page_title="2025 Season Scores", layout="centered")
