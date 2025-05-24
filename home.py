@@ -42,9 +42,6 @@ def highlight_class(row):
 
     return [f'background-color: {style["bg"]}; color: {style["fg"]}'] * len(row)
 
-# --- Set 🏅 Rank as index to remove extra column ---
-df = df.set_index("🏅 Rank")
-
 # --- Display leaderboard ---
 st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
 
