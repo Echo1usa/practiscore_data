@@ -5,18 +5,19 @@ db_path = "allshooters_dev.db"
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
-# --- Ensure wyco_points column exists ---
+# --- Ensure wyco_points column exists in results ---
 try:
     cursor.execute("ALTER TABLE results ADD COLUMN wyco_points REAL")
 except sqlite3.OperationalError:
-    pass  # Column already exists
+    pass  # Already exists
 
-# Define classification thresholds
+# --- Classification thresholds ---
 A_THRESHOLD = 87.0
 B_THRESHOLD = 67.0
 
-# Define class ranks for comparison
+# --- Class rank for comparison ---
 class_rank = {"Unclassified": 0, "C": 1, "B": 2, "A": 3}
+
 
 def calculate_wyco_points():
     print("\n🎯 Calculating WYCO points...")
@@ -30,7 +31,7 @@ def calculate_wyco_points():
         max_points = cursor.fetchone()[0]
 
         if not max_points or max_points == 0:
-            continue  # avoid divide by zero
+            continue  # Avoid divide by zero
 
         cursor.execute("""
             SELECT id, points FROM results
@@ -43,15 +44,15 @@ def calculate_wyco_points():
     conn.commit()
     print("✅ WYCO points updated.\n")
 
+
 def determine_initial_class(percentages):
-    if len(percentages) < 3:
-        return "Unclassified"
-    if all(p > A_THRESHOLD for p in percentages[:3]):
+    if all(p >= A_THRESHOLD for p in percentages[:3]):
         return "A"
     elif all(p <= B_THRESHOLD for p in percentages[:3]):
         return "C"
     else:
         return "B"
+
 
 def evaluate_class_promotion(existing_class, all_percentages):
     for i in range(len(all_percentages) - 2):
@@ -62,8 +63,9 @@ def evaluate_class_promotion(existing_class, all_percentages):
             return "A"
     return existing_class
 
+
 def classify_shooters():
-    print("\n🔍 Re-classifying shooters based on match history...")
+    print("\n🔍 Re-classifying shooters based on non-zero WYCO scores...")
 
     shooter_ids = cursor.execute("""
         SELECT id, name, COALESCE(classification, 'Unclassified') AS classification
@@ -74,11 +76,22 @@ def classify_shooters():
 
     for shooter_id, name, current_class in shooter_ids:
         percentages = cursor.execute("""
-            SELECT wyco_points FROM results
-            WHERE shooter_id = ?
-            ORDER BY match_id ASC
+            SELECT r.wyco_points
+            FROM results r
+            JOIN matches m ON r.match_id = m.id
+            WHERE r.shooter_id = ? AND r.wyco_points > 0
+            ORDER BY m.match_date ASC
         """, (shooter_id,)).fetchall()
         percentages = [p[0] for p in percentages if p[0] is not None]
+
+        if len(percentages) < 3:
+            if current_class != "Unclassified":
+                cursor.execute(
+                    "UPDATE shooters SET classification = 'Unclassified' WHERE id = ?",
+                    (shooter_id,)
+                )
+                print(f"🔸 {name}: {current_class} → Unclassified (not enough non-zero scores)")
+            continue
 
         initial_class = determine_initial_class(percentages)
         final_class = evaluate_class_promotion(initial_class, percentages)
@@ -93,6 +106,7 @@ def classify_shooters():
 
     conn.commit()
     print(f"\n✅ Classification updated for {updated_count} shooter(s).")
+
 
 # --- Execute ---
 calculate_wyco_points()
