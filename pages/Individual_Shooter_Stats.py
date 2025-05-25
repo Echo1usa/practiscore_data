@@ -1,12 +1,7 @@
-# streamlit_app: title = "📄 Individual Results"
-
-
 import streamlit as st
 import sqlite3
 import pandas as pd
 import altair as alt
-
-#comment
 
 # --- Settings ---
 DB_PATH = "allshooters_dev.db"
@@ -23,51 +18,44 @@ shooter_names = shooters['name'].tolist()
 
 if shooter_names:
     selected_shooter = st.selectbox("Select a shooter:", shooter_names)
-
-    # Year filter
     year_filter = st.selectbox("Filter by year:", ["All Years", "2024", "2025"])
 
-    # Fetch results for selected shooter
-    query = """
+    # Fetch shooter's classification and WYCO points
+    meta_query = """
+    SELECT classification, wyco_points
+    FROM shooters
+    WHERE name = ?
+    """
+    meta = pd.read_sql_query(meta_query, conn, params=(selected_shooter,))
+    classification = meta.at[0, 'classification'] or "Unclassified"
+    wyco_points = meta.at[0, 'wyco_points'] or 0
+
+    st.subheader(f"🏷️ Classification: **{classification}**")
+    st.markdown(f"💯 **WYCO Points:** {wyco_points}")
+
+    # Fetch match results
+    results_query = """
     SELECT m.name AS match_name,
            r.place,
            r.points,
            r.percentage,
+           r.wyco_points,
            m.match_date
     FROM results r
     JOIN matches m ON r.match_id = m.id
     JOIN shooters s ON r.shooter_id = s.id
     WHERE s.name = ?
     """
-    df = pd.read_sql_query(query, conn, params=(selected_shooter,))
+    df = pd.read_sql_query(results_query, conn, params=(selected_shooter,))
     df['match_date'] = pd.to_datetime(df['match_date'], errors='coerce')
     df.dropna(subset=['match_date'], inplace=True)
+    df.sort_values("match_date", inplace=True)
 
-    # Apply year filter
     if year_filter != "All Years":
-        year = int(year_filter)
-        df = df[df['match_date'].dt.year == year]
+        df = df[df['match_date'].dt.year == int(year_filter)]
 
     if not df.empty:
-        # 📊 Stats Summary
-        
-        # Sort by most recent match date
-        df_sorted = df.sort_values("match_date", ascending=False).head(3)
-
-        # Get the last 3 match percentages
-        recent_percentages = df_sorted["percentage"].tolist()
-
-        # Determine classification
-        if all(p >= 87 for p in recent_percentages):
-            classification = "Class A"
-        elif all(p >= 67 for p in recent_percentages):
-            classification = "Class B"
-        else:
-            classification = "Class C"
-
-        st.subheader(f"🏷️ Current Classification: **{classification}**")
-
-        
+        # --- Stats Summary ---
         st.subheader("📊 Stats Summary")
 
         total_matches = len(df)
@@ -90,19 +78,19 @@ if shooter_names:
         - 🥇 **Best Placement:** {best_place_match['place']} — *{best_place_match['match_name']}*
         """)
 
-        # 📋 Match Table
+        if df['wyco_points'].notna().any():
+            best_wyco = df.loc[df['wyco_points'].idxmax()]
+            st.markdown(f"- 🏅 **Best WYCO Points:** {best_wyco['wyco_points']} — *{best_wyco['match_name']}*")
+
+        # --- Match Table ---
         st.subheader("📋 Match Results")
         st.dataframe(df)
 
-        # 📈 Match % Chart
+        # --- Match % Chart ---
         st.subheader("📈 Match % Over Time")
-
         df['label'] = df['match_date'].dt.strftime('%b %Y') + " – " + df['match_name']
-        df['label_order'] = df['match_date']
-        df.sort_values('match_date', inplace=True)
-
         chart = alt.Chart(df).mark_line(point=True).encode(
-            x=alt.X('label:N', sort=df['label_order'].tolist(), title='Match'),
+            x=alt.X('label:N', sort=df['match_date'].tolist(), title='Match'),
             y=alt.Y('percentage:Q', title='Match %'),
             tooltip=[
                 alt.Tooltip('match_name:N', title='Match'),
