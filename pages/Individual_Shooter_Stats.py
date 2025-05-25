@@ -27,8 +27,9 @@ if shooter_names:
     WHERE name = ?
     """
     meta = pd.read_sql_query(meta_query, conn, params=(selected_shooter,))
-    classification = meta.at[0, 'classification'] or "Unclassified"
-    wyco_points = meta.at[0, 'wyco_points'] or 0
+    classification = meta['classification'].fillna("Unclassified").iloc[0]
+    wyco_points = meta['wyco_points'].fillna(0).iloc[0]
+
 
     st.subheader(f"🏷️ Classification: **{classification}**")
     st.markdown(f"💯 **WYCO Points:** {wyco_points}")
