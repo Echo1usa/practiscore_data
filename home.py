@@ -40,8 +40,8 @@ if class_filter != "All":
 # --- Highlight rows by classification with vivid and dark-mode-friendly colors ---
 def highlight_class(row):
     color = {
-        "A": "#2ecc71",        # green
-        "B": "#e67e22",        # orange
+        "A": "#3caa6a",        # green
+        "B": "#eb8d3b",        # orange
         "C": "#3498db",        # blue
         "Unclassified": "#000000"  # black
     }.get(row["classification"], "#2c3e50")
