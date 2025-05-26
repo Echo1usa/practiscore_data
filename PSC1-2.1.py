@@ -7,21 +7,21 @@ import os
 import sys
 
 # --- Debug Environment Info ---
-print("🐍 Python version:", sys.version)
-print("📁 Working directory:", os.getcwd())
-print("📄 Looking for match_urls.txt in:", os.path.abspath("match_urls.txt"))
+print("\U0001F40D Python version:", sys.version)
+print("\U0001F4C1 Working directory:", os.getcwd())
+print("\U0001F4C4 Looking for match_urls.txt in:", os.path.abspath("match_urls.txt"))
 
 # --- File with match URLs (one per line) ---
-url_file = "match_urls.txt"  # keep it relative in DevContainer
+url_file = "match_urls.txt"
 
 # --- Check for file before opening ---
 if not os.path.exists(url_file):
-    print(f"❌ match_urls.txt not found at {os.path.abspath(url_file)}")
+    print(f"\u274C match_urls.txt not found at {os.path.abspath(url_file)}")
     sys.exit(1)
 
 with open(url_file, "r") as f:
-    urls = [line.strip() for line in f if line.strip()]
-print(f"✅ Loaded {len(urls)} match URL(s)")
+    urls = [line.strip() for line in f if line.strip() and line.strip().startswith("http")]
+print(f"\u2705 Loaded {len(urls)} match URL(s)")
 
 # --- Database path ---
 db_path = "allshooters_dev.db"
@@ -33,7 +33,12 @@ for col in ["classification", "wyco_number", "wpr_number"]:
     try:
         cursor.execute(f"ALTER TABLE shooters ADD COLUMN {col} TEXT")
     except sqlite3.OperationalError:
-        pass  # already exists
+        pass
+
+try:
+    cursor.execute("ALTER TABLE matches ADD COLUMN venue_id INTEGER")
+except sqlite3.OperationalError:
+    pass
 
 # --- Table setup ---
 cursor.execute("""
@@ -42,7 +47,8 @@ CREATE TABLE IF NOT EXISTS matches (
     name TEXT NOT NULL,
     url TEXT NOT NULL UNIQUE,
     date_added TEXT NOT NULL,
-    match_date TEXT
+    match_date TEXT,
+    venue_id INTEGER
 )
 """)
 
@@ -69,10 +75,19 @@ CREATE TABLE IF NOT EXISTS results (
 
 conn.commit()
 
+# --- Venue name to ID map ---
+venue_map = {
+    "cheyenne": 1,
+    "laramie": 2,
+    "pawnee": 3,
+    "larkspur": 4,
+    "rawlins": 5
+}
+
 # --- Scraping loop ---
 with sync_playwright() as p:
     for match_url in urls:
-        print(f"\n🔎 Loading: {match_url}")
+        print(f"\n\U0001F50E Loading: {match_url}")
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
 
@@ -81,28 +96,45 @@ with sync_playwright() as p:
             time.sleep(2)
             page.wait_for_selector("table tr td", timeout=15000)
 
-            # Match name & date
             match_name_element = page.query_selector("h3") or page.query_selector("h1")
             match_name = match_name_element.inner_text().strip() if match_name_element else "Unknown Match"
-            print(f"📌 Match: {match_name}")
+            print(f"\U0001F4CC Match: {match_name}")
             match_date = re.search(r"(\d{4}-\d{2}-\d{2})", match_name)
             match_date = match_date.group(1) if match_date else None
-            print(f"📅 Date: {match_date}")
+            print(f"\U0001F4C5 Date: {match_date}")
 
-            # Insert or update match
+            # Detect venue from match name
+            venue_id = None
+            for key, vid in venue_map.items():
+                if key in match_name.lower():
+                    venue_id = vid
+                    break
+
+            if not venue_id:
+                user_input = input(f"❓ Could not detect venue for match: '{match_name}'. Please enter venue (Cheyenne, Laramie, Pawnee, Larkspur, Rawlins): ").strip().lower()
+                venue_id = venue_map.get(user_input)
+                if not venue_id:
+                    print("⚠️ Invalid venue. Skipping match.")
+                    browser.close()
+                    continue
+
+            # Skip if match already exists
             cursor.execute("SELECT id FROM matches WHERE url = ?", (match_url,))
             row = cursor.fetchone()
             if row:
-                match_id = row[0]
-                cursor.execute("UPDATE matches SET name=?, date_added=?, match_date=? WHERE id=?",
-                               (match_name, datetime.now().isoformat(), match_date, match_id))
-            else:
-                cursor.execute("INSERT INTO matches (name, url, date_added, match_date) VALUES (?, ?, ?, ?)",
-                               (match_name, match_url, datetime.now().isoformat(), match_date))
-                match_id = cursor.lastrowid
+                print(f"⏩ Skipping already-imported match: {match_name}")
+                browser.close()
+                continue
+
+            # Insert new match
+            cursor.execute("""
+                INSERT INTO matches (name, url, date_added, match_date, venue_id)
+                VALUES (?, ?, ?, ?, ?)
+            """, (match_name, match_url, datetime.now().isoformat(), match_date, venue_id))
+            match_id = cursor.lastrowid
             conn.commit()
 
-            # --- Parse results table ---
+            # Parse results table
             rows = page.query_selector_all("table tr")
             column_map = {}
 
@@ -130,50 +162,18 @@ with sync_playwright() as p:
                 cursor.execute("SELECT id FROM shooters WHERE name = ?", (name,))
                 shooter_id = cursor.fetchone()[0]
 
-                cursor.execute("REPLACE INTO results (match_id, shooter_id, place, points, percentage) VALUES (?, ?, ?, ?, ?)",
-                               (match_id, shooter_id, place, points, percentage))
+                cursor.execute("""
+                    REPLACE INTO results (match_id, shooter_id, place, points, percentage)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (match_id, shooter_id, place, points, percentage))
                 conn.commit()
 
             print("✅ Match processed.")
 
         except Exception as e:
-            print(f"❌ Error processing {match_url}: {e}")
+            print(f"\u274C Error processing {match_url}: {e}")
 
         browser.close()
-
-def classify_shooters():
-    shooter_ids = cursor.execute("SELECT id FROM shooters").fetchall()
-
-    for (shooter_id,) in shooter_ids:
-        # Remove the skip to always re-classify (optional)
-        # existing = cursor.execute("SELECT classification FROM shooters WHERE id = ?", (shooter_id,)).fetchone()[0]
-        # if existing:
-        #     continue
-
-        percentages = cursor.execute("""
-            SELECT percentage FROM results
-            WHERE shooter_id = ?
-            ORDER BY match_id ASC
-            LIMIT 3
-        """, (shooter_id,)).fetchall()
-
-        if len(percentages) < 3:
-            classification = 'Unclassified'
-        else:
-            avg = sum(p[0] for p in percentages) / 3
-            if avg > 87:
-                classification = 'A'
-            elif avg > 67:
-                classification = 'B'
-            else:
-                classification = 'C'
-
-        cursor.execute(
-            "UPDATE shooters SET classification = ? WHERE id = ?",
-            (classification, shooter_id)
-        )
-
-    conn.commit()
 
 conn.close()
 print("\n✅ All matches processed.")
