@@ -18,7 +18,7 @@ cursor.execute("""
     FROM results r
     JOIN matches m ON r.match_id = m.id
     JOIN shooters s ON r.shooter_id = s.id
-    WHERE r.wyco_points IS NOT NULL AND m.venue_id IS NOT NULL
+    WHERE r.wyco_points IS NOT NULL AND m.venue_id IS NOT NULL AND s.wyco_number IS NOT NULL AND s.is_active_member = 1
     GROUP BY s.id, m.venue_id
 """)
 

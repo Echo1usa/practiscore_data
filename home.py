@@ -18,6 +18,8 @@ SELECT
     s.wyco_points
 FROM shooters s
 WHERE s.wyco_points IS NOT NULL
+AND s.wyco_number IS NOT NULL
+AND s.is_active_member = 1
 """
 
 df = pd.read_sql_query(query, conn)

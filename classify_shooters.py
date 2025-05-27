@@ -70,6 +70,8 @@ def classify_shooters():
     shooter_ids = cursor.execute("""
         SELECT id, name, COALESCE(classification, 'Unclassified') AS classification
         FROM shooters
+        WHERE wyco_number IS NOT NULL
+        AND is_active_member = 1
     """).fetchall()
 
     updated_count = 0
