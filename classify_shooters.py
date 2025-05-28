@@ -45,13 +45,18 @@ def calculate_wyco_points():
     print("✅ WYCO points updated.\n")
 
 
-def determine_initial_class(percentages):
-    if all(p >= A_THRESHOLD for p in percentages[:3]):
-        return "A"
-    elif all(p <= B_THRESHOLD for p in percentages[:3]):
+def determine_initial_class(scores):
+    first_three = scores[:3]
+    if len(first_three) < 3:
+        return "Unclassified"
+    avg = sum(first_three) / 3
+    if avg <= 67:
         return "C"
-    else:
+    elif avg <= 87:
         return "B"
+    else:
+        return "A"
+
 
 
 def evaluate_class_promotion(existing_class, all_percentages):
