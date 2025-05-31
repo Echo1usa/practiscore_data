@@ -1,0 +1,36 @@
+Current features and stats on V0.2
+  -scraper can scan multiple matches and stages. It only needs the over all results page URL and can scan from there. As of 1.1 there is NO function
+  to detect duplicate matches. This will be added at some point soon. Right now, if it is run it will go through all wyco matches April 2025 to
+  present
+  
+  -PSC1-2.1 has been depricated and is only around for reference if some kind of specific issue pops up that wasn't present in that version
+
+  -Admin.py is in early stages. It is an admin panel that is accessible through streamlit like the dashboards. It allows for easy viewing of names
+  wyco numbers, membership status, etc.
+
+  -import_shooters.py imports shooters names, wyco numbers, and current membership status from wyconumbers.csv
+
+  -match_urls.txt is where matches are input. Scraper ignores lines that start with # so you can lable
+
+  -pointsv2.py calculates current wyco scores. This must be run after every match import
+
+  -classify_shooters.py well, classifies shooters. This must also be run every time there is an import
+
+  -fix_duplicates.py will scan the DB looking for shooters with the same name and merge profiles. This is useful for if someone signs up under
+  a different spelling or capitalization
+
+  -Merge_TJ is depricated and will be removed in V0.3
+
+  -
+
+  Planned changes for V0.3 (Place X for complete)
+   
+   -Host DB somewhere other than github
+
+   -Create page for individual match results with stages and add a comparison tool
+
+   -Finish and test admin page
+
+   -More beta testing with wyco membership
+
+   
