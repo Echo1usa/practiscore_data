@@ -4,7 +4,7 @@ import pandas as pd
 import altair as alt
 
 # --- Settings ---
-DB_PATH = "allshooters_dev.db"
+DB_PATH = "allshooters_prs.db"
 
 st.set_page_config(page_title="Individual Shooter Data", layout="centered")
 st.title("Individual Shooter Data")
