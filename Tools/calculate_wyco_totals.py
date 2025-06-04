@@ -1,4 +1,5 @@
 import sqlite3
+from collections import defaultdict
 
 # --- Connect to the database ---
 db_path = "allshooters_dev.db"
@@ -17,16 +18,15 @@ cursor.execute("""
     FROM results r
     JOIN matches m ON r.match_id = m.id
     JOIN shooters s ON r.shooter_id = s.id
-    WHERE r.wyco_points IS NOT NULL AND m.venue_id IS NOT NULL
+    WHERE r.wyco_points IS NOT NULL AND m.venue_id IS NOT NULL AND s.wyco_number IS NOT NULL AND s.is_active_member = 1
     GROUP BY s.id, m.venue_id
 """)
-
-from collections import defaultdict
 
 shooter_venue_scores = defaultdict(list)
 
 for shooter_id, venue_id, score in cursor.fetchall():
-    shooter_venue_scores[shooter_id].append(score)
+    if score > 0:  # ✅ filter out zero scores
+        shooter_venue_scores[shooter_id].append(score)
 
 # --- Step 2: For each shooter, sum their top 3 venue scores ---
 for shooter_id, scores in shooter_venue_scores.items():
@@ -36,4 +36,4 @@ for shooter_id, scores in shooter_venue_scores.items():
 
 conn.commit()
 conn.close()
-print("\n✅ WYCO totals calculated and stored in shooters.wyco_points")
+print("\n✅ WYCO totals calculated and stored in shooters.wyco_points (excluding 0s)")
