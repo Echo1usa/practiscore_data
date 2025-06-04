@@ -30,22 +30,22 @@ if shooter_names:
     classification = meta['classification'].fillna("Unclassified").iloc[0]
     wyco_points = meta['wyco_points'].fillna(0).iloc[0]
 
-
     st.subheader(f"🏷️ Classification: **{classification}**")
     st.markdown(f"💯 **WYCO Points:** {wyco_points}")
 
-    # Fetch match results
+    # Fetch match results (only Overall)
     results_query = """
-    SELECT m.name AS match_name,
-           r.place,
-           r.points,
-           r.percentage,
-           r.wyco_points,
+    SELECT m.match_name,
+           sc.place,
+           sc.points,
+           sc.percentage,
+           sc.wyco_points,
            m.match_date
-    FROM results r
-    JOIN matches m ON r.match_id = m.id
-    JOIN shooters s ON r.shooter_id = s.id
+    FROM scores sc
+    JOIN matches m ON sc.match_id = m.match_id
+    JOIN shooters s ON sc.shooter_id = s.shooter_id
     WHERE s.name = ?
+    AND sc.stage_name = "Overall"
     """
     df = pd.read_sql_query(results_query, conn, params=(selected_shooter,))
     df['match_date'] = pd.to_datetime(df['match_date'], errors='coerce')
@@ -62,10 +62,6 @@ if shooter_names:
         total_matches = len(df)
         avg_place = df['place'].mean()
         avg_pct = df['percentage'].mean()
-        best_pct = df['percentage'].max()
-        best_pts = df['points'].max()
-        best_place = df['place'].min()
-
         best_pct_match = df.loc[df['percentage'].idxmax()]
         best_pts_match = df.loc[df['points'].idxmax()]
         best_place_match = df.loc[df['place'].idxmin()]
@@ -85,7 +81,8 @@ if shooter_names:
 
         # --- Match Table ---
         st.subheader("📋 Match Results")
-        st.dataframe(df)
+        st.dataframe(df[["match_date", "match_name", "place", "points", "percentage", "wyco_points"]],
+                     hide_index=True, use_container_width=True)
 
         # --- Match % Chart ---
         st.subheader("📈 Match % Over Time")

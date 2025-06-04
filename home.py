@@ -46,7 +46,13 @@ def highlight_class(row):
     return [f'background-color: {color}; color: white'] * len(row)
 
 # --- Display leaderboard ---
-st.dataframe(df.style.apply(highlight_class, axis=1), use_container_width=True)
+st.dataframe(
+    df[["Rank", "shooter_name", "classification", "wyco_points"]]
+      .style.apply(highlight_class, axis=1)
+      .hide(axis="index"),
+    use_container_width=True
+)
+
 
 # --- Footer ---
 st.markdown("""
