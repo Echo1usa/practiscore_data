@@ -9,31 +9,55 @@ DB_PATH = "allshooters_prs.db"
 st.set_page_config(page_title="Individual Shooter Data", layout="centered")
 st.title("Individual Shooter Data")
 
-# Connect to the database
+# Connect to DB
 conn = sqlite3.connect(DB_PATH)
 
-# Get list of all shooters
+# Load shooter list
 shooters = pd.read_sql_query("SELECT name FROM shooters ORDER BY name", conn)
 shooter_names = shooters['name'].tolist()
+
+# --- Achievement descriptions ---
+achievement_info = {
+    "🥇 Top Gun": "Placed 1st overall in a match",
+    "🎯 Threesome": "Shot 3 or more matches in the same month",
+    "😬 Well, you tried...": "Scored between 0% and 20% in a match"
+}
 
 if shooter_names:
     selected_shooter = st.selectbox("Select a shooter:", shooter_names)
     year_filter = st.selectbox("Filter by year:", ["All Years", "2024", "2025"])
 
-    # Fetch shooter's classification and WYCO points
-    meta_query = """
-    SELECT classification, wyco_points
-    FROM shooters
-    WHERE name = ?
-    """
-    meta = pd.read_sql_query(meta_query, conn, params=(selected_shooter,))
+    # Get shooter metadata
+    meta = pd.read_sql_query("""
+        SELECT classification, wyco_points
+        FROM shooters WHERE name = ?
+    """, conn, params=(selected_shooter,))
     classification = meta['classification'].fillna("Unclassified").iloc[0]
     wyco_points = meta['wyco_points'].fillna(0).iloc[0]
 
     st.subheader(f"🏷️ Classification: **{classification}**")
     st.markdown(f"💯 **WYCO Points:** {wyco_points}")
 
-    # Fetch match results (only Overall)
+    # Class Rank
+    rank_query = """
+    SELECT s.name AS shooter_name,
+           s.classification,
+           SUM(sc.wyco_points) AS total_points
+    FROM scores sc
+    JOIN shooters s ON sc.shooter_id = s.shooter_id
+    WHERE sc.stage_name = "Overall"
+    GROUP BY s.name, s.classification
+    """
+    ranks_df = pd.read_sql_query(rank_query, conn)
+    ranks_df['class_rank'] = ranks_df.groupby('classification')['total_points'].rank(method='dense', ascending=False)
+
+    shooter_row = ranks_df[ranks_df['shooter_name'] == selected_shooter]
+    if not shooter_row.empty:
+        class_rank = int(shooter_row['class_rank'].iloc[0])
+        total_in_class = ranks_df[ranks_df['classification'] == classification].shape[0]
+        st.markdown(f"📊 You are currently **#{class_rank}** out of **{total_in_class}** in **{classification or 'Unclassified'}** class.")
+
+    # Match results
     results_query = """
     SELECT m.match_name,
            sc.place,
@@ -56,7 +80,7 @@ if shooter_names:
         df = df[df['match_date'].dt.year == int(year_filter)]
 
     if not df.empty:
-        # --- Stats Summary ---
+        # Stats summary
         st.subheader("📊 Stats Summary")
 
         total_matches = len(df)
@@ -79,16 +103,19 @@ if shooter_names:
             best_wyco = df.loc[df['wyco_points'].idxmax()]
             st.markdown(f"- 🏅 **Best WYCO Points:** {best_wyco['wyco_points']} — *{best_wyco['match_name']}*")
 
-        # --- Match Table ---
+        # Match Table
         st.subheader("📋 Match Results")
         st.dataframe(df[["match_date", "match_name", "place", "points", "percentage", "wyco_points"]],
                      hide_index=True, use_container_width=True)
 
-        # --- Match % Chart ---
+        # Chart with trend
         st.subheader("📈 Match % Over Time")
-        df['label'] = df['match_date'].dt.strftime('%b %Y') + " – " + df['match_name']
-        chart = alt.Chart(df).mark_line(point=True).encode(
-            x=alt.X('label:N', sort=df['match_date'].tolist(), title='Match'),
+        show_trend = st.checkbox("Show trend line")
+
+        df['match_label'] = df['match_name'] + ' ' + df['match_date'].dt.strftime('%b%Y')
+
+        base = alt.Chart(df).mark_line(point=True).encode(
+            x=alt.X('match_label:N', title='Match', sort=df['match_date'].tolist(), axis=alt.Axis(labelAngle=-45)),
             y=alt.Y('percentage:Q', title='Match %'),
             tooltip=[
                 alt.Tooltip('match_name:N', title='Match'),
@@ -97,7 +124,40 @@ if shooter_names:
             ]
         ).properties(width=800, height=400)
 
-        st.altair_chart(chart, use_container_width=True)
+        if show_trend:
+            trend = alt.Chart(df).transform_regression('match_date', 'percentage').mark_line(color='orange').encode(
+                x='match_date:T',
+                y='percentage:Q'
+            )
+            st.altair_chart(base + trend, use_container_width=True)
+        else:
+            st.altair_chart(base, use_container_width=True)
+
+        # --- Achievements Badge Board ---
+        st.subheader("🏅 Achievements Unlocked")
+
+        achievements_query = """
+        SELECT a.achievement, m.match_name, m.match_date
+        FROM achievements a
+        JOIN matches m ON a.match_id = m.match_id
+        WHERE a.shooter_id = (
+            SELECT shooter_id FROM shooters WHERE name = ?
+        )
+        ORDER BY m.match_date DESC
+        """
+        achievements_df = pd.read_sql_query(achievements_query, conn, params=(selected_shooter,))
+
+        if achievements_df.empty:
+            st.info("No achievements yet. Keep shooting!")
+        else:
+            for _, row in achievements_df.iterrows():
+                desc = achievement_info.get(row['achievement'], "Achievement unlocked!")
+                date_str = pd.to_datetime(row['match_date']).strftime('%b %d, %Y')
+                st.markdown(
+                    f"- **{row['achievement']}** — *{row['match_name']}* on `{date_str}`  \n"
+                    f"  <span style='color:gray;font-size:0.9em;'>{desc}</span>",
+                    unsafe_allow_html=True
+                )
 
     else:
         st.info("No results found for this shooter in selected year.")
