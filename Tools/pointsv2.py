@@ -1,7 +1,7 @@
 import sqlite3
 
 # --- Connect to the database ---
-db_path = "allshooters_prs.db"  # Update path if needed
+db_path = r"C:\Practiscore Data\practiscore_data\allshooters_prs.db"  # Update path if needed
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
