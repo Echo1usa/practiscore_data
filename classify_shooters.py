@@ -1,7 +1,7 @@
 import sqlite3
 
 # Connect to the database
-db_path = r"C:\Practiscore Data\practiscore_data\allshooters_prs.db"
+db_path = r"C:\Practiscore\allshooters_prs.db"
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
