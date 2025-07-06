@@ -1,3 +1,7 @@
+fastapi
+sqlmodel
+uvicorn[standard]
+python-multipart  # if you're using forms or file uploads
 streamlit
 pandas
 altair
