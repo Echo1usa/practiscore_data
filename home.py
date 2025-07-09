@@ -4,7 +4,7 @@ import pandas as pd
 
 # --- Page config ---
 st.set_page_config(page_title="WYCO 2025 Season Standings as of 6/23/2025", layout="centered")
-st.title("WYCO 2025 Season Standings as of 6/1/2025")
+st.title("WYCO 2025 Season Standings as of 7/8/2025")
 
 # --- Connect to the database ---
 db_path = "allshooters_prs.db"
