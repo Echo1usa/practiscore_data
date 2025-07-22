@@ -2,13 +2,19 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 
-# --- Page config ---
-st.set_page_config(page_title="WYCO 2025 Season Standings as of 7/19/2025", layout="centered")
-st.title("WYCO 2025 Season Standings as of 7/19/2025")
-
 # --- Connect to the database ---
 db_path = "allshooters_prs.db"
 conn = sqlite3.connect(db_path)
+
+# --- Get most recent match date ---
+match_date_query = "SELECT MAX(match_date) AS latest_date FROM matches"
+latest_date_row = pd.read_sql_query(match_date_query, conn)
+latest_date = pd.to_datetime(latest_date_row.iloc[0]['latest_date'])
+formatted_date = latest_date.strftime("%-m/%-d/%Y")  # e.g., 7/21/2025
+
+# --- Page config ---
+st.set_page_config(page_title=f"WYCO 2025 Season Standings as of {formatted_date}", layout="centered")
+st.title(f"WYCO 2025 Season Standings as of {formatted_date}")
 
 # --- Query shooter WYCO data ---
 query = """
@@ -45,14 +51,13 @@ def highlight_class(row):
     }.get(row["classification"], "#2c3e50")
     return [f'background-color: {color}; color: white'] * len(row)
 
-# --- Display leaderboard ---
+# --- Display leaderboard without index ---
 st.dataframe(
     df[["Rank", "shooter_name", "classification", "wyco_points"]]
       .style.apply(highlight_class, axis=1)
       .hide(axis="index"),
     use_container_width=True
 )
-
 
 # --- Footer ---
 st.markdown("""
