@@ -1,7 +1,7 @@
 import sqlite3
 
-correct_id = 35     # "Rizzo, TJ"
-duplicate_id = 221  # "Rizzo, Thomas"
+correct_id = 85     # "Rizzo, TJ"
+duplicate_id = 34  # "Rizzo, Thomas"
 
 conn = sqlite3.connect("allshooters_prs.db")
 cursor = conn.cursor()
