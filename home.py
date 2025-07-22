@@ -51,13 +51,9 @@ def highlight_class(row):
     }.get(row["classification"], "#2c3e50")
     return [f'background-color: {color}; color: white'] * len(row)
 
-# --- Display leaderboard without index ---
-st.dataframe(
-    df[["Rank", "shooter_name", "classification", "wyco_points"]]
-      .style.apply(highlight_class, axis=1)
-      .hide(axis="index"),
-    use_container_width=True
-)
+# --- Apply highlighting and hide index ---
+styled_df = df[["Rank", "shooter_name", "classification", "wyco_points"]].style.apply(highlight_class, axis=1)
+st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
 # --- Footer ---
 st.markdown("""
