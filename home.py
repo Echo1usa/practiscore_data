@@ -6,7 +6,7 @@ import pandas as pd
 st.set_page_config(page_title="WYCO 2025 Season Standings", layout="centered")
 
 # --- Logo ---
-st.image("C:\Practiscore\images\wycologo.png", width=200)
+st.image("images/wycologo.png", width=200)
 
 # --- Title ---
 st.title("WYCO 2025 Season Standings as of 7/8/2025")
