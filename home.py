@@ -5,8 +5,15 @@ import pandas as pd
 # --- Page config ---
 st.set_page_config(page_title="WYCO 2025 Season Standings", layout="centered")
 
-# --- Logo ---
-st.image("wycologo.png", width=200)
+# --- Logo (centered and larger) ---
+st.markdown(
+    """
+    <div style="text-align: center;">
+        <img src="wycologo.png" width="300">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # --- Title ---
 st.title("WYCO 2025 Season Standings as of 7/8/2025")
