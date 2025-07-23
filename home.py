@@ -1,19 +1,16 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+from PIL import Image
 
 # --- Page config ---
 st.set_page_config(page_title="WYCO 2025 Season Standings", layout="centered")
 
-# --- Logo (centered and larger) ---
-st.markdown(
-    """
-    <div style="text-align: center;">
-        <img src="wycologo.png" width="300">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# --- Logo (centered and larger) using st.image ---
+logo = Image.open("wycologo.png")
+st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+st.image(logo, width=300)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Title ---
 st.title("WYCO 2025 Season Standings as of 7/8/2025")
