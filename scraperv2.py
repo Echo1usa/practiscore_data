@@ -117,7 +117,7 @@ def scrape_match(overall_url, base_stage_url):
                 venue_id = vid
                 break
         if not venue_id:
-            venue_id = int(input(f"Couldn't determine venue from '{match_name}'. Enter venue ID manually: "))
+            venue_id = int(input(f"Couldn't determine venue from '{match_name}'. Enter venue ID manually: 1. Cheyenne 2. Laramie 3. Pawnee 4. Larkspur 5. Rawlins "))
 
         print(f"📋 Match: {match_name} | Date: {match_date} | Venue ID: {venue_id}")
 
