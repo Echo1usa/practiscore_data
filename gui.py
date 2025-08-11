@@ -7,12 +7,12 @@ def run_scripts():
     venue = venue_entry.get()
 
     if not url or not venue:
-        messagebox.showerror("Input Error", "Please enter both Match URL and Venue ID.")
+        messagebox.showerror("Input Error", "Please enter both Match URL and Venue ID. 1. Cheyenne 2. Laramie 3. Pawnee 4. Larkspur 5. Rawlins ")
         return
 
     try:
         # Run script 1 with arguments
-        subprocess.run(["python", "scaperv2.py", url, venue], check=True)
+        subprocess.run(["python", "scraperv2.py", url, venue], check=True)
 
         # Run script 2 (no args, or add if needed)
         subprocess.run(["python", "pointsv2.py"], check=True)
