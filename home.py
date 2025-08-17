@@ -31,7 +31,6 @@ WHERE s.wyco_points IS NOT NULL
 AND s.wyco_number IS NOT NULL
 AND s.membership_active = 1
 """
-
 df = pd.read_sql_query(query_base, conn)
 
 # --- Query top score per shooter per venue ---
@@ -44,15 +43,14 @@ FROM scores sc
 JOIN matches m ON sc.match_id = m.match_id
 GROUP BY sc.shooter_id, m.venue_id
 """
-
 venue_scores = pd.read_sql_query(query_scores, conn)
 
-# --- Pivot to wide format ---
+# --- Pivot venue scores to wide format ---
 venue_wide = venue_scores.pivot(index="shooter_id", columns="venue_id", values="top_score")
 venue_wide.rename(columns={vid: f"Top {vname}" for vid, vname in venue_names.items()}, inplace=True)
 venue_wide.reset_index(inplace=True)
 
-# --- Merge with main leaderboard ---
+# --- Merge with leaderboard ---
 df = df.merge(venue_wide, on="shooter_id", how="left")
 
 # --- Ensure all expected venue columns exist ---
@@ -61,10 +59,10 @@ for col in expected_venue_cols:
     if col not in df.columns:
         df[col] = None
 
-# --- Global sort by WYCO points descending ---
+# --- Sort by WYCO points ---
 df = df.sort_values(by="wyco_points", ascending=False).reset_index(drop=True)
 
-# --- Add overall Rank column ---
+# --- Add Rank column ---
 df.insert(0, "Rank", range(1, len(df) + 1))
 
 # --- Filter by classification ---
@@ -72,7 +70,7 @@ class_filter = st.selectbox("Filter by classification:", options=["All", "A", "B
 if class_filter != "All":
     df = df[df["classification"] == class_filter].copy()
 
-# --- Highlight rows by classification ---
+# --- Highlight by classification ---
 def highlight_class(row):
     color = {
         "A": "#3caa6a",
@@ -82,16 +80,14 @@ def highlight_class(row):
     }.get(row["classification"], "#2c3e50")
     return [f'background-color: {color}; color: white'] * len(row)
 
-# --- Display leaderboard ---
+# --- Display leaderboard without index column ---
 core_cols = ["Rank", "shooter_name", "classification", "wyco_points"]
 display_cols = core_cols + expected_venue_cols
-
 styled_df = df[display_cols].reset_index(drop=True)
 
-st.dataframe(
-    styled_df.style.apply(highlight_class, axis=1),
-    use_container_width=True
-)
+styled = styled_df.style.apply(highlight_class, axis=1)
+
+st.dataframe(styled, use_container_width=True, hide_index=True)
 
 # --- Footer ---
 st.markdown("""
