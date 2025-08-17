@@ -37,12 +37,12 @@ df = pd.read_sql_query(query_base, conn)
 # --- Query top score per shooter per venue ---
 query_scores = """
 SELECT
-    r.shooter_id,
+    sc.shooter_id,
     m.venue_id,
-    MAX(r.percentage) AS top_score
-FROM results r
-JOIN matches m ON r.match_id = m.match_id
-GROUP BY r.shooter_id, m.venue_id
+    MAX(sc.percentage) AS top_score
+FROM scores sc
+JOIN matches m ON sc.match_id = m.match_id
+GROUP BY sc.shooter_id, m.venue_id
 """
 
 venue_scores = pd.read_sql_query(query_scores, conn)
@@ -85,17 +85,4 @@ display_cols = core_cols + venue_cols
 styled_df = df[display_cols].reset_index(drop=True)
 
 st.dataframe(
-    styled_df.style.apply(highlight_class, axis=1),
-    use_container_width=True
-)
-
-# --- Footer ---
-st.markdown("""
-- 🥇 Ranked by total WYCO points across all classes  
-- 📍 New: View each shooter’s top percentage score from each venue  
-- 🔍 Use the filter to narrow results, but rankings reflect full leaderboard order  
-- ✨ WYCO points = sum of your best score at your top 3 venues
-""")
-
-# --- Cleanup ---
-conn.close()
+    styled_df.styl_
