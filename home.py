@@ -85,4 +85,17 @@ display_cols = core_cols + venue_cols
 styled_df = df[display_cols].reset_index(drop=True)
 
 st.dataframe(
-    styled_df.styl_
+    styled_df.style.apply(highlight_class, axis=1),
+    use_container_width=True
+)
+
+# --- Footer ---
+st.markdown("""
+- 🥇 Ranked by total WYCO points across all classes  
+- 📍 View each shooter’s top percentage score from each venue  
+- 🔍 Use the filter to narrow results, but rankings reflect full leaderboard order  
+- ✨ WYCO points = sum of your best score at your top 3 venues
+""")
+
+# --- Cleanup ---
+conn.close()
