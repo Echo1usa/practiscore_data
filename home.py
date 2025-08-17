@@ -55,6 +55,12 @@ venue_wide.reset_index(inplace=True)
 # --- Merge with main leaderboard ---
 df = df.merge(venue_wide, on="shooter_id", how="left")
 
+# --- Ensure all expected venue columns exist ---
+expected_venue_cols = [f"Top {v}" for v in venue_names.values()]
+for col in expected_venue_cols:
+    if col not in df.columns:
+        df[col] = None
+
 # --- Global sort by WYCO points descending ---
 df = df.sort_values(by="wyco_points", ascending=False).reset_index(drop=True)
 
@@ -76,12 +82,10 @@ def highlight_class(row):
     }.get(row["classification"], "#2c3e50")
     return [f'background-color: {color}; color: white'] * len(row)
 
-# --- Columns to show ---
-core_cols = ["Rank", "shooter_name", "classification", "wyco_points"]
-venue_cols = [f"Top {v}" for v in venue_names.values()]
-display_cols = core_cols + venue_cols
-
 # --- Display leaderboard ---
+core_cols = ["Rank", "shooter_name", "classification", "wyco_points"]
+display_cols = core_cols + expected_venue_cols
+
 styled_df = df[display_cols].reset_index(drop=True)
 
 st.dataframe(
