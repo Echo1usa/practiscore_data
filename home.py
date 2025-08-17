@@ -81,7 +81,7 @@ def highlight_class(row):
     return [f'background-color: {color}; color: white'] * len(row)
 
 # --- Display leaderboard without index column ---
-core_cols = ["Rank", "Shooter Name", "Classification", "WYCO Points"]
+core_cols = ["Rank", "shooter_name", "classification", "wyco_points"]
 display_cols = core_cols + expected_venue_cols
 styled_df = df[display_cols].reset_index(drop=True)
 
