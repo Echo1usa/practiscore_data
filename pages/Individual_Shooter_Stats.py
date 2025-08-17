@@ -50,6 +50,10 @@ if shooter_names:
     df = pd.read_sql_query(results_query, conn, params=(selected_shooter,))
     df['match_date'] = pd.to_datetime(df['match_date'], errors='coerce')
     df.dropna(subset=['match_date'], inplace=True)
+
+    # Ignore zero scores
+    df = df[(df['percentage'] > 0) & (df['points'] > 0)]
+
     df.sort_values("match_date", inplace=True)
 
     if year_filter != "All Years":
